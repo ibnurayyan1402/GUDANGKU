@@ -53,7 +53,7 @@ Route::middleware('auth')->group(function () {
     Route::resource('supplier', SupplierController::class);
     Route::resource('barang-keluar', BarangKeluarController::class);
     
-    // 📊 MENU UTAMA ADMIN GUDANG
+    // MENU UTAMA ADMIN GUDANG
     Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
     Route::resource('supplier', SupplierController::class);
     Route::resource('barang', BarangController::class);
@@ -69,7 +69,7 @@ Route::middleware('auth')->group(function () {
     // Menu Tambahan Admin
     Route::get('/laporan', [DashboardController::class, 'laporan'])->name('laporan.index');
 
-    // 🏪 MENU UTAMA STAFF TOKO (Menggunakan WmsTokoController agar integrasi lancar)
+    // MENU UTAMA STAFF TOKO (Menggunakan WmsTokoController agar integrasi lancar)
     Route::get('/toko/dashboard', function() {
         return view('toko.dashboard');
     })->name('toko.dashboard');
@@ -85,7 +85,7 @@ Route::middleware('auth')->group(function () {
     // C. Sub-Menu: Stok Etalase
     Route::get('/toko-etalase', [WmsTokoController::class, 'stokEtalaseIndex'])->name('toko-etalase.index');
 
-    // 🔓 BISA DIAKSES KEDUA ROLE SELESAI LOGIN (Profile & Logout)
+    // BISA DIAKSES KEDUA ROLE SELESAI LOGIN (Profile & Logout)
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');

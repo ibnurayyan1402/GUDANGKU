@@ -2,76 +2,56 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Barang;
-use App\Models\PermintaanBarang;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
 class WmsTokoController extends Controller
 {
-    // === MENU 1: MINTA BARANG ===
+    /**
+     * === MENU 1: HALAMAN DAFTAR PERMINTAAN BARANG ===
+     * Menampilkan riwayat request barang dari toko ke gudang
+     */
     public function mintaBarangIndex()
     {
-        $permintaans = PermintaanBarang::with('barang')->latest()->get();
-        $barangs = Barang::orderBy('nama_barang', 'asc')->get();
+        // Ambil data log permintaan gabung dengan tabel master barang untuk mengambil 'nama_barang'
+        $permintaans = DB::table('permintaan_barangs')
+            ->join('barangs', 'permintaan_barangs.barang_id', '=', 'barangs.id')
+            ->select('permintaan_barangs.*', 'barangs.nama_barang')
+            ->orderBy('permintaan_barangs.created_at', 'desc')
+            ->get();
+
+        // Ambil semua daftar barang untuk kebutuhan pilihan dropdown di form modal toko
+        $barangs = DB::table('barangs')
+            ->orderBy('nama_barang', 'asc')
+            ->get();
+
+        // Lempar data ke view toko/minta_barang.blade.php
         return view('toko.minta_barang', compact('permintaans', 'barangs'));
     }
 
+    /**
+     * === MENU 2: PROSES SIMPAN PERMINTAAN BARANG ===
+     * Memproses data ketika toko mengklik tombol 'Kirim Permintaan'
+     */
     public function mintaBarangStore(Request $request)
     {
+        // Validasi inputan dari form modal toko
         $request->validate([
-            'barang_id' => 'required|exists:barangs,id',
-            'jumlah_diminta' => 'required|integer|min:1',
+            'barang_id' => 'required',
+            'jumlah'    => 'required|integer|min:1',
         ]);
 
-        PermintaanBarang::create([
-            'barang_id' => $request->barang_id,
-            'jumlah_diminta' => $request->jumlah_diminta,
-            'status' => 'Pending'
+        // Masukkan data request baru ke tabel dengan status default 'Pending'
+        DB::table('permintaan_barangs')->insert([
+            'barang_id'  => $request->barang_id,
+            'jumlah'     => $request->jumlah,
+            'status'     => 'Pending', // Menunggu persetujuan admin gudang
+            'created_at' => now(),
+            'updated_at' => now(),
         ]);
 
-        return redirect()->route('toko.minta.index')->with('success', 'Permintaan pasokan baru berhasil diajukan ke Gudang Utama!');
-    }
-
-    // === MENU 2: PENERIMAAN BARANG ===
-    public function penerimaanIndex()
-    {
-        // Menampilkan barang permintaan yang statusnya sudah 'Disetujui' oleh gudang utama
-        $kirimanGudang = PermintaanBarang::with('barang')
-            ->whereIn('status', ['Disetujui', 'Diterima Toko'])
-            ->latest()
-            ->get();
-
-        return view('toko.penerimaan_barang', compact('kirimanGudang'));
-    }
-
-    public function terimaBarangAction($id)
-    {
-        $permintaan = PermintaanBarang::findOrFail($id);
-
-        if ($permintaan->status === 'Diterima Toko') {
-            return redirect()->back()->with('error', 'Barang ini sudah pernah diterima sebelumnya.');
-        }
-
-        DB::transaction(function () use ($permintaan) {
-            // Update status pengajuan
-            $permintaan->update(['status' => 'Diterima Toko']);
-
-            // Tambahkan kuantitas ke stok etalase ritel toko
-            $barang = Barang::find($permintaan->barang_id);
-            if ($barang) {
-                $barang->increment('stok_etalase', $permintaan->jumlah_diminta);
-            }
-        });
-
-        return redirect()->route('toko.penerimaan.index')->with('success', 'Stok berhasil masuk dan menambah display etalase ritel!');
-    }
-
-    // === MENU 3: STOK ETALASE ===
-    public function stokEtalaseIndex()
-    {
-        // Tampilkan daftar real-time stok yang ada di etalase toko saat ini
-        $barangs = Barang::orderBy('nama_barang', 'asc')->get();
-        return view('toko.stok_etalase', compact('barangs'));
+        // Redirect kembali dengan pesan sukses
+        return redirect()->route('toko-permintaan.index')
+            ->with('success', 'Permintaan pasokan barang berhasil dikirim ke Gudang Utama! Menunggu konfirmasi.');
     }
 }

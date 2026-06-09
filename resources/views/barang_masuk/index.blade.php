@@ -65,7 +65,7 @@
                         </tr>
                     </thead>
                     <tbody class="text-sm divide-y divide-slate-900">
-                        @forelse($barang_masuks ?? [] as $log)
+                        @forelse($barang_masuks as $log)
                         <tr>
                             <td class="py-4 text-slate-400">{{ \Carbon\Carbon::parse($log->tanggal_masuk)->format('d/m/Y') }}</td>
                             <td class="py-4 font-bold text-white">{{ $log->barang->nama_barang ?? 'N/A' }}</td>
@@ -91,7 +91,7 @@
                     <h2 class="text-xl font-black text-white">Form Pencatatan Barang Masuk</h2>
                     <p class="text-xs text-slate-400 mt-0.5">Masukkan data transaksi log pasokan barang baru.</p>
                 </div>
-                <button @click="open = false" class="text-slate-500 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button type="button" @click="open = false" class="text-slate-500 hover:text-white transition"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
 
             <form action="{{ route('barang-masuk.store') }}" method="POST" class="space-y-4">
@@ -101,8 +101,8 @@
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Pilih Item Barang</label>
                     <select name="barang_id" required class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500 transition">
                         <option value="">-- Pilih Barang --</option>
-                        @foreach($barangs ?? [] as $b)
-                            <option value="{{ $b->id }}">{{ $b->nama_barang }}</option>
+                        @foreach($barangs as $b)
+                            <option value="{{ $b->id }}">{{ $b->nama_barang }} (Sisa Stok: {{ $b->stok }} Pcs)</option>
                         @endforeach
                     </select>
                 </div>
@@ -111,7 +111,7 @@
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-400 mb-2">Pemasok / Supplier</label>
                     <select name="supplier_id" required class="w-full bg-slate-900 border border-slate-800 rounded-xl px-4 py-3 text-white text-sm focus:outline-none focus:border-blue-500 transition">
                         <option value="">-- Pilih Supplier --</option>
-                        @foreach($suppliers ?? [] as $s)
+                        @foreach($suppliers as $s)
                             <option value="{{ $s->id }}">{{ $s->nama_supplier }}</option>
                         @endforeach
                     </select>
